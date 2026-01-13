@@ -131,6 +131,7 @@ CREATE DATABASE blood_donation_db;
 ### Option B: Restore Database from Google Drive Backup
 
 If you are using a **database backup uploaded to Google Drive**:
+sample db: https://drive.google.com/file/d/1wMU1m9d_mM8KQbD4cQxKo8gtojzijtoo/view?usp=sharing
 
 1. Download the `.sql` backup file
 2. Restore using terminal:
@@ -138,8 +139,18 @@ If you are using a **database backup uploaded to Google Drive**:
 ```bash
 psql -U postgres -d blood_donation_db -f blood_donation_db.sql
 ```
+OR 
+
+Create empty database
+
+Right-click → Restore
+
+Select backup.sql
+
+Restore
 
 > Make sure the database `blood_donation_db` already exists before restoring.
+
 
 ---
 
