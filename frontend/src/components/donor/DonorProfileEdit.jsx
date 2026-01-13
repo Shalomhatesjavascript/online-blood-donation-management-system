@@ -5,10 +5,13 @@ import Select from '../common/Select';
 import Button from '../common/Button';
 import Alert from '../common/Alert';
 import { donorService } from '../../services/donorService';
+import { useAuth } from '../../hooks/useAuth';
 import { GENDERS, NIGERIAN_STATES } from '../../utils/constants';
 import { User, Phone, MapPin, Calendar } from 'lucide-react';
 
 const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
+  const { user } = useAuth();
+  
   const [formData, setFormData] = useState({
     full_name: donor.full_name || '',
     age: donor.age || '',
@@ -16,30 +19,77 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
     phone: donor.phone || '',
     address: donor.address || '',
     city: donor.city || '',
-    state: donor.state || '',
-    last_donation_date: donor.last_donation_date || ''
+    state: donor.state || ''
   });
 
   const [loading, setLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    
+    if (!formData.full_name || formData.full_name.trim().length < 2) {
+      newErrors.full_name = 'Name must be at least 2 characters';
+    }
+    
+    if (!formData.age || formData.age < 18 || formData.age > 65) {
+      newErrors.age = 'Age must be between 18-65';
+    }
+    
+    if (!formData.gender) {
+      newErrors.gender = 'Gender is required';
+    }
+    
+    if (!formData.phone || formData.phone.trim().length < 10) {
+      newErrors.phone = 'Valid phone number required';
+    }
+    
+    if (!formData.address || formData.address.trim().length < 5) {
+      newErrors.address = 'Address is required';
+    }
+    
+    if (!formData.city) {
+      newErrors.city = 'City is required';
+    }
+    
+    if (!formData.state) {
+      newErrors.state = 'State is required';
+    }
+    
+    return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    
     setLoading(true);
     setAlertMessage(null);
 
     try {
-      await donorService.updateDonor(donor.donor_id, formData);
+      // Use the user's ID from auth context
+      await donorService.updateDonor(user.user_id, formData);
       onSuccess();
     } catch (error) {
+      console.error('Update error:', error);
       setAlertMessage({
         type: 'error',
-        message: error.response?.data?.message || 'Failed to update profile'
+        message: error.response?.data?.message || 'Failed to update profile. Please try again.'
       });
     } finally {
       setLoading(false);
@@ -69,6 +119,7 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
             name="full_name"
             value={formData.full_name}
             onChange={handleChange}
+            error={errors.full_name}
             icon={User}
             required
           />
@@ -79,6 +130,7 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
             name="age"
             value={formData.age}
             onChange={handleChange}
+            error={errors.age}
             icon={Calendar}
             required
           />
@@ -90,6 +142,7 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
           value={formData.gender}
           onChange={handleChange}
           options={GENDERS}
+          error={errors.gender}
           required
         />
 
@@ -98,6 +151,7 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
           name="phone"
           value={formData.phone}
           onChange={handleChange}
+          error={errors.phone}
           icon={Phone}
           required
         />
@@ -107,6 +161,7 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
           name="address"
           value={formData.address}
           onChange={handleChange}
+          error={errors.address}
           icon={MapPin}
           required
         />
@@ -117,6 +172,7 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
             name="city"
             value={formData.city}
             onChange={handleChange}
+            error={errors.city}
             required
           />
 
@@ -126,17 +182,16 @@ const DonorProfileEdit = ({ donor, onClose, onSuccess }) => {
             value={formData.state}
             onChange={handleChange}
             options={NIGERIAN_STATES}
+            error={errors.state}
             required
           />
         </div>
 
-        <Input
-          label="Last Donation Date"
-          type="date"
-          name="last_donation_date"
-          value={formData.last_donation_date}
-          onChange={handleChange}
-        />
+        <div className="bg-medical-blue-light p-4 rounded-lg border border-medical-blue">
+          <p className="text-sm text-medical-blue-dark">
+            <strong>Note:</strong> Blood group cannot be changed. Contact admin if there's an error.
+          </p>
+        </div>
 
         <div className="flex gap-3 pt-4">
           <Button

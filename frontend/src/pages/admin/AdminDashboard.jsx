@@ -9,6 +9,7 @@ import Alert from '../../components/common/Alert';
 import InventoryManagement from '../../components/admin/InventoryManagement';
 import RequestManagement from '../../components/admin/RequestManagement';
 import StockOverview from '../../components/admin/StockOverview';
+import DonorsManagement from '../../components/admin/DonorsManagement';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -34,6 +35,7 @@ const AdminDashboard = () => {
       setStats(stockRes.data);
       setExpiringUnits(expiringRes.data);
       setPendingRequests(requestsRes.data);
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setAlertMessage({
         type: 'error',
@@ -54,7 +56,8 @@ const AdminDashboard = () => {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: TrendingUp },
     { id: 'inventory', label: 'Inventory', icon: Package },
-    { id: 'requests', label: 'Requests', icon: Users }
+    { id: 'requests', label: 'Requests', icon: Users },
+    { id: 'donors', label: 'Donors', icon: Users } 
   ];
 
   return (
@@ -155,6 +158,9 @@ const AdminDashboard = () => {
               onRefresh={fetchDashboardData}
             />
           )}
+           {activeTab === 'donors' && (
+          <DonorsManagement /> // NEW TAB CONTENT
+        )}
         </div>
       </div>
     </div>

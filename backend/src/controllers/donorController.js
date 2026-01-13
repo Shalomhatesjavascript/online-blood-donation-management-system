@@ -179,3 +179,89 @@ exports.getEligibleDonors = async (req, res) => {
     });
   }
 };
+
+// Get all donors (admin only)
+exports.getAllDonors = async (req, res) => {
+  try {
+    const { blood_group, city, state, eligible_only, search } = req.query;
+
+    const whereClause = {};
+    if (blood_group) whereClause.blood_group = blood_group;
+    if (city) whereClause.city = { [Op.iLike]: `%${city}%` };
+    if (state) whereClause.state = { [Op.iLike]: `%${state}%` };
+    if (search) {
+      whereClause[Op.or] = [
+        { full_name: { [Op.iLike]: `%${search}%` } },
+        { phone: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+
+    let donors = await Donor.findAll({
+      where: whereClause,
+      include: [{
+        model: User,
+        attributes: ['email', 'is_verified', 'createdAt']
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Filter by eligibility if requested
+    if (eligible_only === 'true') {
+      donors = donors.filter(donor => donor.isEligible());
+    }
+
+    // Add eligibility status to each donor
+    const donorsWithEligibility = donors.map(donor => ({
+      ...donor.toJSON(),
+      is_eligible: donor.isEligible(),
+      days_until_eligible: donor.daysUntilEligible()
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: donorsWithEligibility.length,
+      data: donorsWithEligibility
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch donors',
+      error: error.message
+    });
+  }
+};
+
+// Update donor's last donation date (admin only)
+exports.updateDonationDate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { last_donation_date } = req.body;
+
+    const donor = await Donor.findByPk(id);
+    if (!donor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Donor not found'
+      });
+    }
+
+    donor.last_donation_date = last_donation_date;
+    await donor.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Donation date updated successfully',
+      data: {
+        ...donor.toJSON(),
+        is_eligible: donor.isEligible(),
+        days_until_eligible: donor.daysUntilEligible()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update donation date',
+      error: error.message
+    });
+  }
+};

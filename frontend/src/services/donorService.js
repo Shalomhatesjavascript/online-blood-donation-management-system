@@ -1,9 +1,15 @@
 import api from './api';
 
 export const donorService = {
-  // Search donors
+  // Search donors (for recipients)
   searchDonors: async (params) => {
-    const response = await api.get('/donors', { params });
+    const response = await api.get('/donors/search', { params });
+    return response.data;
+  },
+
+  // Get all donors (for admin)
+  getAllDonors: async (params) => {
+    const response = await api.get('/donors/all', { params });
     return response.data;
   },
 
@@ -16,6 +22,14 @@ export const donorService = {
   // Update donor profile
   updateDonor: async (id, data) => {
     const response = await api.put(`/donors/${id}`, data);
+    return response.data;
+  },
+
+  // Update donation date (admin only)
+  updateDonationDate: async (id, date) => {
+    const response = await api.put(`/donors/${id}/donation-date`, {
+      last_donation_date: date
+    });
     return response.data;
   },
 

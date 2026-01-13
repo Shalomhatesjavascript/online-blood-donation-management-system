@@ -6,7 +6,8 @@ export const BLOOD_GROUPS = [
   { value: 'AB+', label: 'AB+' },
   { value: 'AB-', label: 'AB-' },
   { value: 'O+', label: 'O+' },
-  { value: 'O-', label: 'O-' }
+  { value: 'O-', label: 'O-' },
+  
 ];
 
 export const GENDERS = [

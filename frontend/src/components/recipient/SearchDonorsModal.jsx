@@ -34,6 +34,7 @@ const SearchDonorsModal = ({ onClose }) => {
     setSearched(true);
 
     try {
+      // FIXED: Use the correct searchDonors method
       const response = await donorService.searchDonors(searchParams);
       setDonors(response.data);
       
@@ -44,9 +45,10 @@ const SearchDonorsModal = ({ onClose }) => {
         });
       }
     } catch (error) {
+      console.error('Search error:', error);
       setAlertMessage({
         type: 'error',
-        message: 'Failed to search donors'
+        message: error.response?.data?.message || 'Failed to search donors. Please try again.'
       });
     } finally {
       setLoading(false);

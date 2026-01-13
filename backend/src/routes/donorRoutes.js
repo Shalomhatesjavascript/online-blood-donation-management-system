@@ -8,12 +8,18 @@ const { validateDonorSearch, validateDonorUpdate, handleValidationErrors } = req
 // All routes require authentication
 router.use(authMiddleware);
 
-// Search donors (recipient, admin)
-router.get('/', 
+// Search donors (recipient, admin) - FIXED: Changed from donors/ to search/
+router.get('/search', 
   checkRole('recipient', 'admin'),
   validateDonorSearch,
   handleValidationErrors,
   donorController.searchDonors
+);
+
+// Get ALL donors (admin only) - NEW ROUTE
+router.get('/all',
+  checkRole('admin'),
+  donorController.getAllDonors
 );
 
 // Get eligible donors (admin only)
@@ -24,7 +30,7 @@ router.get('/eligible',
 
 // Get specific donor
 router.get('/:id',
-  checkRole('admin'),
+  checkRole('donor', 'admin'),
   donorController.getDonorById
 );
 
@@ -34,6 +40,12 @@ router.put('/:id',
   validateDonorUpdate,
   handleValidationErrors,
   donorController.updateDonor
+);
+
+// Update donation date (admin only) - NEW ROUTE
+router.put('/:id/donation-date',
+  checkRole('admin'),
+  donorController.updateDonationDate
 );
 
 // Get donation history

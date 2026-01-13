@@ -20,7 +20,7 @@ router.get('/expiring',
   inventoryController.getExpiringUnits
 );
 
-// Add blood unit (admin only)
+// Add blood unit (admin only) - NOW AUTO-UPDATES DONOR
 router.post('/',
   checkRole('admin'),
   validateAddBloodUnit,
@@ -31,12 +31,15 @@ router.post('/',
 // Update blood unit (admin only)
 router.put('/:id',
   checkRole('admin'),
-  validateUpdateBloodUnit,handleValidationErrors,
-inventoryController.updateBloodUnit
+  validateUpdateBloodUnit,
+  handleValidationErrors,
+  inventoryController.updateBloodUnit
 );
+
 // Delete blood unit (admin only)
 router.delete('/:id',
-checkRole('admin'),
-inventoryController.deleteBloodUnit
+  checkRole('admin'),
+  inventoryController.deleteBloodUnit
 );
+
 module.exports = router;
