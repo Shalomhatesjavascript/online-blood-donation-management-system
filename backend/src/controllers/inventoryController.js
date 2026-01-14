@@ -1,5 +1,6 @@
 const { BloodInventory, Donor } = require('../models');
 const { Op } = require('sequelize');
+const { sequelize } = require('../config/database'); // ADD THIS LINE
 
 // Get all inventory with filters
 exports.getInventory = async (req, res) => {
@@ -39,43 +40,125 @@ exports.getInventory = async (req, res) => {
 };
 
 // Add new blood unit
+// Add new blood unit (WITH COMPREHENSIVE ERROR HANDLING)
 exports.addBloodUnit = async (req, res) => {
-  const transaction = await sequelize.transaction();
+  let transaction;
   
   try {
+    transaction = await sequelize.transaction();
+    
     const { blood_group, donation_date, expiration_date, donor_id, storage_location } = req.body;
 
+    console.log('📝 Received data:', JSON.stringify(req.body, null, 2));
+
+    // Validate required fields
+    if (!blood_group) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Blood group is required'
+      });
+    }
+
+    if (!storage_location) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Storage location is required'
+      });
+    }
+
+    // Prepare donation date
+    const finalDonationDate = donation_date || new Date();
+    console.log('📅 Donation date:', finalDonationDate);
+
+    // Calculate expiration date if not provided
+    let finalExpirationDate = expiration_date;
+    if (!finalExpirationDate) {
+      const expDate = new Date(finalDonationDate);
+      expDate.setDate(expDate.getDate() + 35);
+      finalExpirationDate = expDate.toISOString().split('T')[0];
+      console.log('🗓️ Auto-calculated expiration:', finalExpirationDate);
+    }
+
+    // Validate donor exists if donor_id provided
+    if (donor_id) {
+      console.log('👤 Checking donor:', donor_id);
+      const donorExists = await Donor.findByPk(donor_id);
+      if (!donorExists) {
+        await transaction.rollback();
+        return res.status(404).json({
+          success: false,
+          message: `Donor with ID ${donor_id} not found`
+        });
+      }
+      console.log('✅ Donor found:', donorExists.full_name);
+    }
+
     // Create blood unit
+    console.log('🩸 Creating blood unit...');
     const unit = await BloodInventory.create({
       blood_group,
-      donation_date: donation_date || new Date(),
-      expiration_date,
-      donor_id,
+      donation_date: finalDonationDate,
+      expiration_date: finalExpirationDate,
+      donor_id: donor_id || null,
       storage_location,
       status: 'available'
     }, { transaction });
 
-    // If donor_id provided, update donor's last_donation_date
+    console.log('✅ Blood unit created with ID:', unit.unit_id);
+
+    // Update donor's last_donation_date if donor_id provided
     if (donor_id) {
-      await Donor.update(
-        { last_donation_date: donation_date || new Date() },
-        { where: { donor_id }, transaction }
+      console.log('📝 Updating donor last donation date...');
+      const updateResult = await Donor.update(
+        { last_donation_date: finalDonationDate },
+        { 
+          where: { donor_id },
+          transaction 
+        }
       );
+      console.log('✅ Donor update result:', updateResult);
     }
 
     await transaction.commit();
+    console.log('✅ Transaction committed successfully');
 
     res.status(201).json({
       success: true,
       message: 'Blood unit added successfully' + (donor_id ? ' and donor record updated' : ''),
       data: unit
     });
+
   } catch (error) {
-    await transaction.rollback();
+    if (transaction) await transaction.rollback();
+    
+    // Log complete error details
+    console.error('❌ ========================================');
+    console.error('❌ ADD BLOOD UNIT ERROR:');
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
+    
+    if (error.errors) {
+      console.error('❌ Validation errors:', error.errors.map(e => ({
+        field: e.path,
+        message: e.message,
+        type: e.type
+      })));
+    }
+    
+    if (error.original) {
+      console.error('❌ Database error:', error.original.message);
+    }
+    console.error('❌ ========================================');
+    
+    // Send detailed error to frontend
     res.status(500).json({
       success: false,
-      message: 'Failed to add blood unit',
-      error: error.message
+      message: error.message || 'Failed to add blood unit',
+      error: error.name,
+      details: error.errors ? error.errors.map(e => e.message).join(', ') : error.message
     });
   }
 };
