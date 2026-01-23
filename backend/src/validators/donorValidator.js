@@ -2,13 +2,13 @@ const { body, query, param, validationResult } = require('express-validator');
 
 const validateDonorSearch = [
   query('blood_group')
-    .optional()
+    .optional({ checkFalsy: true }) // CHANGED: This allows empty string to be treated as "not provided"
     .isIn(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'])
     .withMessage('Invalid blood group'),
   
   query('eligible_only')
     .optional()
-    .isBoolean()
+    .isIn(['true', 'false']) // CHANGED: Accept both string values
     .withMessage('eligible_only must be true or false')
 ];
 

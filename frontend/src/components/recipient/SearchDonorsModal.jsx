@@ -27,33 +27,49 @@ const SearchDonorsModal = ({ onClose }) => {
     setSearchParams(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setAlertMessage(null);
-    setSearched(true);
+ const handleSearch = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setAlertMessage(null);
+  setSearched(true);
 
-    try {
-      // FIXED: Use the correct searchDonors method
-      const response = await donorService.searchDonors(searchParams);
-      setDonors(response.data);
-      
-      if (response.data.length === 0) {
-        setAlertMessage({
-          type: 'info',
-          message: 'No donors found matching your criteria. Try adjusting your search.'
-        });
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      setAlertMessage({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to search donors. Please try again.'
-      });
-    } finally {
-      setLoading(false);
+  try {
+    // Clean the search params - remove empty strings
+    const cleanParams = {};
+    
+    if (searchParams.blood_group && searchParams.blood_group !== '') {
+      cleanParams.blood_group = searchParams.blood_group;
     }
-  };
+    
+    if (searchParams.city && searchParams.city.trim() !== '') {
+      cleanParams.city = searchParams.city.trim();
+    }
+    
+    if (searchParams.eligible_only) {
+      cleanParams.eligible_only = searchParams.eligible_only;
+    }
+
+    console.log('Searching with params:', cleanParams); // DEBUG
+
+    const response = await donorService.searchDonors(cleanParams);
+    setDonors(response.data);
+    
+    if (response.data.length === 0) {
+      setAlertMessage({
+        type: 'info',
+        message: 'No donors found matching your criteria. Try adjusting your search.'
+      });
+    }
+  } catch (error) {
+    console.error('Search error:', error);
+    setAlertMessage({
+      type: 'error',
+      message: error.response?.data?.message || 'Failed to search donors. Please try again.'
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Modal

@@ -1,15 +1,32 @@
 const { Donor, User, BloodInventory } = require('../models');
 const { Op } = require('sequelize');
 
+
 // Search donors
 exports.searchDonors = async (req, res) => {
   try {
     const { blood_group, city, state, eligible_only } = req.query;
 
+    console.log('🔍 Search params received:', { blood_group, city, state, eligible_only });
+
     const whereClause = {};
-    if (blood_group) whereClause.blood_group = blood_group;
-    if (city) whereClause.city = { [Op.iLike]: `%${city}%` };
-    if (state) whereClause.state = { [Op.iLike]: `%${state}%` };
+    
+    // Only add blood_group filter if it's provided and not empty
+    if (blood_group && blood_group.trim() !== '') {
+      whereClause.blood_group = blood_group;
+    }
+    
+    // Only add city filter if provided
+    if (city && city.trim() !== '') {
+      whereClause.city = { [Op.iLike]: `%${city.trim()}%` };
+    }
+    
+    // Only add state filter if provided
+    if (state && state.trim() !== '') {
+      whereClause.state = { [Op.iLike]: `%${state.trim()}%` };
+    }
+
+    console.log('📝 Where clause:', whereClause);
 
     let donors = await Donor.findAll({
       where: whereClause,
@@ -20,9 +37,12 @@ exports.searchDonors = async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
+    console.log(`✅ Found ${donors.length} donors before eligibility filter`);
+
     // Filter by eligibility if requested
     if (eligible_only === 'true') {
       donors = donors.filter(donor => donor.isEligible());
+      console.log(`✅ After eligibility filter: ${donors.length} donors`);
     }
 
     // Add eligibility status to each donor
@@ -38,6 +58,7 @@ exports.searchDonors = async (req, res) => {
       data: donorsWithEligibility
     });
   } catch (error) {
+    console.error('❌ Search donors error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to search donors',

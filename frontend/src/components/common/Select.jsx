@@ -22,7 +22,7 @@ const Select = ({
       
       <select
         name={name}
-        value={value}
+        value={value || ''} // ENSURE empty string if value is null/undefined
         onChange={onChange}
         required={required}
         disabled={disabled}
@@ -36,7 +36,7 @@ const Select = ({
           ${className}
         `}
       >
-        <option value="">{placeholder}</option>
+        <option value="">{placeholder}</option> {/* Empty value for "All" */}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
