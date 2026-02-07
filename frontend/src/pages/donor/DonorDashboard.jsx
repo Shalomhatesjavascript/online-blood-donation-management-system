@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 import { donorService } from '../../services/donorService';
 import { Heart, Calendar, Clock, TrendingUp, Award } from 'lucide-react';
 import StatCard from '../../components/common/StatCard';
@@ -12,12 +13,14 @@ import DonorProfileEdit from '../../components/donor/DonorProfileEdit';
 
 const DonorDashboard = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [donorProfile, setDonorProfile] = useState(null);
   const [donationHistory, setDonationHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
+  
   useEffect(() => {
     fetchDonorData();
   }, []);
@@ -32,11 +35,9 @@ const DonorDashboard = () => {
       
       setDonorProfile(profileRes.data);
       setDonationHistory(historyRes.data);
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
-      setAlertMessage({
-        type: 'error',
-        message: 'Failed to load dashboard data'
-      });
+      toast.error('Failed to load dashboard data'); // TOAST
     } finally {
       setLoading(false);
     }
@@ -45,11 +46,9 @@ const DonorDashboard = () => {
   const handleProfileUpdate = async () => {
     setShowEditModal(false);
     await fetchDonorData();
-    setAlertMessage({
-      type: 'success',
-      message: 'Profile updated successfully!'
-    });
+    toast.success('Profile updated successfully!'); // TOAST
   };
+
 
   if (loading) {
     return <LoadingSpinner fullScreen message="Loading your dashboard..." />;
