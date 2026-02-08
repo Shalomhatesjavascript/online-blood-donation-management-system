@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL, // Automatically uses .env.production in production
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Request interceptor (add token to headers)
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -21,7 +21,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor (handle errors globally)
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {

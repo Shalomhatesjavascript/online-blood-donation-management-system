@@ -1,17 +1,8 @@
-# Dependencies
 node_modules/
-
-# Environment variables
-
-
-# Logs
+.env
 *.log
 npm-debug.log*
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# IDE
 .vscode/
 .idea/
