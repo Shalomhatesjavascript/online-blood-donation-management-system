@@ -7,27 +7,37 @@ require('dotenv').config();
 const app = express();
 
 app.use(helmet());
-// UPDATED CORS - Allow multiple origins
-const allowedOrigins = [
-  'http://localhost:5173', // Local development
-  'http://localhost:3000', // Alternative local
-  process.env.CORS_ORIGIN  // Production frontend URL
-].filter(Boolean); // Remove undefined values
 
+// SIMPLIFIED CORS CONFIGURATION
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // In development, allow localhost
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
     }
+    
+    // In production, allow Render frontend URLs
+    if (origin.includes('onrender.com')) {
+      return callback(null, true);
+    }
+    
+    // If specific CORS_ORIGIN is set, allow it
+    if (process.env.CORS_ORIGIN && origin === process.env.CORS_ORIGIN) {
+      return callback(null, true);
+    }
+    
+    // Otherwise, reject
+    callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Rest of your app.js stays the same...
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -38,7 +48,7 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Import all routes
+// Import routes
 const authRoutes = require('./routes/authRoutes');
 const donorRoutes = require('./routes/donorRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
