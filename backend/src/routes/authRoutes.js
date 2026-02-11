@@ -9,10 +9,6 @@ router.post('/register', validateRegistration, handleValidationErrors, authContr
 router.post('/login', validateLogin, handleValidationErrors, authController.login);
 router.get('/verify/:token', authController.verifyEmail);
 
-
-// TEMPORARY ADMIN CREATION ROUTE
-router.post('/create-admin', authController.createAdmin);
-
 // Protected routes
 router.get('/me', authMiddleware, authController.getProfile);
 router.post('/logout', authMiddleware, authController.logout);
