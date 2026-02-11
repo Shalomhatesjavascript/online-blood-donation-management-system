@@ -184,3 +184,60 @@ exports.logout = async (req, res) => {
     message: 'Logged out successfully'
   });
 };
+
+
+// TEMPORARY ADMIN CREATION ENDPOINT - REMOVE AFTER USE
+exports.createAdmin = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const { email, password, secret } = req.body;
+
+    // Security check - only allow if secret matches
+    if (secret !== 'CREATE_ADMIN_SECRET_2026') {
+      await transaction.rollback();
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid secret'
+      });
+    }
+
+    // Check if email exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registered'
+      });
+    }
+
+    // Create admin user
+    const user = await User.create({
+      email,
+      password_hash: password,
+      role: 'admin',
+      is_verified: true
+    }, { transaction });
+
+    await transaction.commit();
+
+    res.status(201).json({
+      success: true,
+      message: 'Admin user created successfully',
+      data: {
+        user_id: user.user_id,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Admin creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create admin',
+      error: error.message
+    });
+  }
+};
