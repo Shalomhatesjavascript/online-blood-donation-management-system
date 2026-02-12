@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { donorService } from '../../services/donorService';
 import Card from '../common/Card';
+import { useToast } from '../../hooks/useToast'; // 
 import Button from '../common/Button';
 import Badge from '../common/Badge';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import Alert from '../common/Alert';
 import Modal from '../common/Modal';
-import { Users, Search, Calendar, Phone, MapPin, Mail } from 'lucide-react';
+import { Users, Search, Calendar, Phone, MapPin, Mail, Download } from 'lucide-react'; // ADD Download
+import { exportToCSV } from '../../utils/exportCSV'; //
 import { formatDate } from '../../utils/helpers';
 import { BLOOD_GROUPS, NIGERIAN_STATES } from '../../utils/constants';
 
 const DonorsManagement = () => {
+  const toast = useToast(); // NEW
   const [donors, setDonors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alertMessage, setAlertMessage] = useState(null);
@@ -62,6 +65,32 @@ const DonorsManagement = () => {
     }
   };
 
+  // NEW FUNCTION
+  const handleExport = () => {
+    if (donors.length === 0) {
+      toast.warning('No donors to export');
+      return;
+    }
+
+    const headers = [
+      { key: 'full_name', label: 'Full Name' },
+      { key: 'blood_group', label: 'Blood Group' },
+      { key: 'age', label: 'Age' },
+      { key: 'gender', label: 'Gender' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'User.email', label: 'Email' },
+      { key: 'city', label: 'City' },
+      { key: 'state', label: 'State' },
+      { key: 'address', label: 'Address' },
+      { key: 'last_donation_date', label: 'Last Donation' },
+      { key: 'is_eligible', label: 'Eligible' },
+      { key: 'days_until_eligible', label: 'Days Until Eligible' }
+    ];
+
+    exportToCSV(donors, 'blood_donors', headers);
+    toast.success('Donors exported successfully!'); // TOAST
+  };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
@@ -110,6 +139,16 @@ const DonorsManagement = () => {
       )}
 
       <h2 className="text-xl font-bold text-gray-900 mb-6">Donors Management</h2>
+        {/* ADD EXPORT BUTTON */}
+        <Button
+          variant="success"
+          onClick={handleExport}
+          className="flex items-center gap-2"
+          disabled={donors.length === 0}
+        >
+          <Download size={20} />
+          Export to CSV
+        </Button>
 
       {/* Filters */}
       <form onSubmit={handleSearch} className="mb-6 space-y-4">

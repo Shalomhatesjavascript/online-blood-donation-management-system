@@ -12,8 +12,12 @@ import Alert from '../../components/common/Alert';
 import { formatDate, timeAgo, getStatusColor, getUrgencyColor } from '../../utils/helpers';
 import CreateRequestModal from '../../components/recipient/CreateRequestModal';
 import SearchDonorsModal from '../../components/recipient/SearchDonorsModal';
+import { Download } from 'lucide-react';
+import { exportToCSV } from '../../utils/exportCSV';
+import { useToast } from '../../hooks/useToast';
 
 const RecipientDashboard = () => {
+   const toast = useToast();
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +34,7 @@ const RecipientDashboard = () => {
       setLoading(true);
       const response = await requestService.getRequests();
       setRequests(response.data);
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setAlertMessage({
         type: 'error',
@@ -38,6 +43,28 @@ const RecipientDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+    const handleExport = () => {
+    if (requests.length === 0) {
+      toast.warning('No requests to export');
+      return;
+    }
+
+    const headers = [
+      { key: 'request_id', label: 'Request ID' },
+      { key: 'blood_group', label: 'Blood Group' },
+      { key: 'units_needed', label: 'Units Needed' },
+      { key: 'urgency_level', label: 'Urgency' },
+      { key: 'hospital_location', label: 'Hospital' },
+      { key: 'status', label: 'Status' },
+      { key: 'createdAt', label: 'Request Date' },
+      { key: 'approved_at', label: 'Approved Date' },
+      { key: 'admin_notes', label: 'Admin Notes' }
+    ];
+
+    exportToCSV(requests, 'blood_requests', headers);
+    toast.success('Requests exported successfully!');
   };
 
   const handleCancelRequest = async (requestId) => {
@@ -80,32 +107,41 @@ const RecipientDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fadeIn">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Blood Request Dashboard
-            </h1>
-            <p className="text-gray-600">Manage your blood requests and search for donors</p>
-          </div>
+    <div>
+      <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        Blood Request Dashboard
+      </h1>
+      <p className="text-gray-600">Manage your blood requests and search for donors</p>
+    </div>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowSearchModal(true)}
-              className="flex items-center gap-2"
-            >
-              <Search size={20} />
-              Search Donors
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus size={20} />
-              New Request
-            </Button>
-          </div>
-        </div>
+    <div className="flex gap-3">
+      <Button
+        variant="success"
+        onClick={handleExport}
+        className="flex items-center gap-2"
+        disabled={requests.length === 0}
+      >
+        <Download size={20} />
+        Export
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => setShowSearchModal(true)}
+        className="flex items-center gap-2"
+      >
+        <Search size={20} />
+        Search Donors
+      </Button>
+      <Button
+        variant="primary"
+        onClick={() => setShowCreateModal(true)}
+        className="flex items-center gap-2"
+      >
+        <Plus size={20} />
+        New Request
+      </Button>
+    </div>
+  </div>
 
         {alertMessage && (
           <Alert

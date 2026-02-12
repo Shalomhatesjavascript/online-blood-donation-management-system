@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast'; // NEW IMPORT
 import { Mail, Lock, Droplet, AlertCircle } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import Alert from '../../components/common/Alert';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const toast = useToast(); // NEW
   
   const [formData, setFormData] = useState({
     email: '',
@@ -17,7 +18,6 @@ const Login = () => {
   
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [alertMessage, setAlertMessage] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,10 +53,11 @@ const Login = () => {
     }
 
     setLoading(true);
-    setAlertMessage(null);
 
     try {
       const user = await login(formData.email, formData.password);
+      
+      toast.success(`Welcome back, ${user.email}!`); // TOAST INSTEAD OF ALERT
       
       // Redirect based on role
       switch (user.role) {
@@ -73,10 +74,7 @@ const Login = () => {
           navigate('/');
       }
     } catch (error) {
-      setAlertMessage({
-        type: 'error',
-        message: error.response?.data?.message || 'Login failed. Please try again.'
-      });
+      toast.error(error.response?.data?.message || 'Login failed. Please try again.'); // TOAST
     } finally {
       setLoading(false);
     }
@@ -98,15 +96,6 @@ const Login = () => {
 
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 animate-fadeIn">
-          {alertMessage && (
-            <Alert
-              type={alertMessage.type}
-              message={alertMessage.message}
-              onClose={() => setAlertMessage(null)}
-              className="mb-6"
-            />
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
               label="Email Address"
