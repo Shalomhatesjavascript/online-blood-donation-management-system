@@ -11,7 +11,8 @@ const Card = ({
       onClick={onClick}
       className={`
         bg-white rounded-xl shadow-md border border-gray-100
-        ${hover ? 'hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1' : ''}
+        ${hover ? 'hover:shadow-xl transition-all duration-300 active:scale-98' : ''}
+        ${onClick ? 'cursor-pointer' : ''}
         ${className}
       `}
     >
