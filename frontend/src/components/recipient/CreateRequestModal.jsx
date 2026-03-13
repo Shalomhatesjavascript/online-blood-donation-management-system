@@ -88,21 +88,22 @@ const CreateRequestModal = ({ onClose, onSuccess }) => {
         />
 
         <Input
-          label="Hospital Location"
-          name="hospital_location"
-          value={formData.hospital_location}
-          onChange={handleChange}
-          placeholder="e.g., Babcock University Teaching Hospital"
-          icon={MapPin}
-          required
-        />
+  label="Delivery Location (Hospital or Address)"
+  name="hospital_location"
+  value={formData.hospital_location}
+  onChange={handleChange}
+  placeholder="e.g., Lagos General Hospital or 123 Main St, Lagos"
+  icon={MapPin}
+  required
+/>
 
         <div className="bg-medical-blue-light p-4 rounded-lg border border-medical-blue">
-          <p className="text-sm text-medical-blue-dark">
-            <strong>Note:</strong> Your request will be reviewed by hospital administrators. 
-            You'll be notified once it's approved.
-          </p>
-        </div>
+  <p className="text-sm text-medical-blue-dark">
+    <strong>Note:</strong> Your request will be reviewed by blood bank administrators. 
+    You'll be notified once it's approved. Specify the hospital name if you're hospital staff, 
+    or your delivery address if you're an individual.
+  </p>
+</div>
 
         <div className="flex gap-3 pt-4">
           <Button

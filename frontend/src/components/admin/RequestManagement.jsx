@@ -5,8 +5,9 @@ import Button from '../common/Button';
 import Badge from '../common/Badge';
 import Alert from '../common/Alert';
 import Modal from '../common/Modal';
-import { CheckCircle, XCircle, Clock, Users } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Users, } from 'lucide-react';
 import { formatDate, timeAgo } from '../../utils/helpers';
+import { useToast } from '../../hooks/useToast';
 
 const RequestManagement = ({ requests, onRefresh }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -15,27 +16,25 @@ const RequestManagement = ({ requests, onRefresh }) => {
   const [adminNotes, setAdminNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
+  const toast = useToast();
 
-  const handleApprove = async () => {
-    setLoading(true);
-    try {
-      await requestService.approveRequest(selectedRequest.request_id, { admin_notes: adminNotes });
-      setAlertMessage({
-        type: 'success',
-        message: 'Request approved successfully'
-      });
-      setShowApproveModal(false);
-      setAdminNotes('');
-      onRefresh();
-    } catch (error) {
-      setAlertMessage({
-        type: 'error',
-        message: error.response?.data?.message || 'Failed to approve request'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleApprove = async () => {
+  setLoading(true);
+  try {
+    await requestService.approveRequest(selectedRequest.request_id, { 
+      admin_notes: adminNotes,
+      delivery_time_minutes: 1 // 1 minute for demo (customizable)
+    });
+    toast.success('Request approved! Blood will be delivered in 1 minute.');
+    setShowApproveModal(false);
+    setAdminNotes('');
+    onRefresh();
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Failed to approve request');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleReject = async () => {
     setLoading(true);
@@ -92,25 +91,27 @@ const RequestManagement = ({ requests, onRefresh }) => {
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* Left - Request Details */}
                 <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="w-14 h-14 rounded-full bg-blood-red flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">{request.blood_group}</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 text-lg">
-                        {request.units_needed} {request.units_needed === 1 ? 'Unit' : 'Units'} Needed
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Requested {timeAgo(request.createdAt)} by {request.recipient?.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-600">Hospital: </span>
-                      <span className="font-medium text-gray-900">{request.hospital_location}</span>
-                    </div>
+  <div className="flex items-center gap-3 flex-wrap">
+    <div className="w-14 h-14 rounded-full bg-blood-red flex items-center justify-center">
+      <span className="text-white font-bold text-lg">{request.blood_group}</span>
+    </div>
+    <div>
+      <p className="font-semibold text-gray-900 text-lg">
+        {request.units_needed} {request.units_needed === 1 ? 'Unit' : 'Units'} Needed
+      </p>
+      <p className="text-sm text-gray-500">
+        Requested {timeAgo(request.createdAt)} by {request.recipient?.email}
+      </p>
+      <p className="text-xs text-gray-500">
+        (Hospital or Individual Recipient)
+      </p>
+    </div>
+  </div>
+<div className="grid sm:grid-cols-2 gap-2 text-sm">
+    <div>
+      <span className="text-gray-600">Delivery to: </span>
+      <span className="font-medium text-gray-900">{request.hospital_location}</span>
+    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600">Urgency: </span>
                       <Badge variant={
@@ -177,8 +178,11 @@ const RequestManagement = ({ requests, onRefresh }) => {
                 Units Needed: <strong>{selectedRequest.units_needed}</strong>
               </p>
               <p className="text-sm text-gray-700">
-                Hospital: <strong>{selectedRequest.hospital_location}</strong>
+                Delivery to: <strong>{selectedRequest.hospital_location}</strong>
               </p>
+              <p className="text-sm text-success-dark font-medium mt-2">
+    ⏱️ Estimated delivery: <strong>1 minute</strong> after approval
+  </p>
             </div>
 
             <div>

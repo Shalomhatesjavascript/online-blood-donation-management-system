@@ -13,6 +13,12 @@ export const inventoryService = {
     return response.data;
   },
 
+   // NEW: Bulk blood unit creation
+  addBulkBloodUnits: async (data) => {
+    const response = await api.post('/inventory/bulk', data);
+    return response.data;
+  },
+
   // Update blood unit
   updateBloodUnit: async (id, data) => {
     const response = await api.put(`/inventory/${id}`, data);

@@ -148,42 +148,51 @@ const Register = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Role Selection */}
-            <div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                I want to register as <span className="text-blood-red">*</span>
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, role: 'donor' }))}
-                  className={`
-                    p-4 rounded-xl border-2 transition-all duration-200 text-left
-                    ${formData.role === 'donor' 
-                      ? 'border-blood-red bg-blood-red-light shadow-md' 
-                      : 'border-gray-300 hover:border-blood-red'
-                    }
-                  `}
-                >
-                  <div className="font-semibold text-gray-900">Blood Donor</div>
-                  <div className="text-sm text-gray-600 mt-1">I want to donate blood</div>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, role: 'recipient' }))}
-                  className={`
-                    p-4 rounded-xl border-2 transition-all duration-200 text-left
-                    ${formData.role === 'recipient' 
-                      ? 'border-medical-blue bg-medical-blue-light shadow-md' 
-                      : 'border-gray-300 hover:border-medical-blue'
-                    }
-                  `}
-                >
-                  <div className="font-semibold text-gray-900">Blood Recipient</div>
-                  <div className="text-sm text-gray-600 mt-1">I need blood</div>
-                </button>
-              </div>
-            </div>
+            
+<div className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200">
+  <label className="block text-sm font-semibold text-gray-700 mb-3">
+    I want to register as <span className="text-blood-red">*</span>
+  </label>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <button
+      type="button"
+      onClick={() => setFormData(prev => ({ ...prev, role: 'donor' }))}
+      className={`
+        p-4 rounded-xl border-2 transition-all duration-200 text-left
+        ${formData.role === 'donor' 
+          ? 'border-blood-red bg-blood-red-light shadow-md' 
+          : 'border-gray-300 hover:border-blood-red'
+        }
+      `}
+    >
+      <div className="font-semibold text-gray-900">Blood Donor</div>
+      <div className="text-sm text-gray-600 mt-1">Individual donating blood</div>
+    </button>
+    
+    <button
+      type="button"
+      onClick={() => setFormData(prev => ({ ...prev, role: 'recipient' }))}
+      className={`
+        p-4 rounded-xl border-2 transition-all duration-200 text-left
+        ${formData.role === 'recipient' 
+          ? 'border-medical-blue bg-medical-blue-light shadow-md' 
+          : 'border-gray-300 hover:border-medical-blue'
+        }
+      `}
+    >
+      <div className="font-semibold text-gray-900">Hospital / Individual</div>
+      <div className="text-sm text-gray-600 mt-1">Hospital or person requesting blood</div>
+    </button>
+  </div>
+
+  {/* NEW: Add info note */}
+  <div className="mt-3 p-3 bg-medical-blue-light rounded-lg border border-medical-blue">
+    <p className="text-xs text-medical-blue-dark">
+      <strong>Note:</strong> Hospital staff and individuals needing blood should select "Hospital / Individual". 
+      Blood bank administrators will be created separately.
+    </p>
+  </div>
+</div>
 
             {/* Basic Information */}
             <div className="space-y-4">

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { inventoryService } from '../../services/inventoryService';
 import { requestService } from '../../services/requestService';
-import { Droplet, Users, AlertTriangle, CheckCircle, TrendingUp, Package } from 'lucide-react';
+import { complaintService } from '../../services/complaintService'; // NEW
+import { Droplet, Users, AlertTriangle, CheckCircle, TrendingUp, Package, MessageSquare } from 'lucide-react';
 import StatCard from '../../components/common/StatCard';
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -10,11 +11,13 @@ import InventoryManagement from '../../components/admin/InventoryManagement';
 import RequestManagement from '../../components/admin/RequestManagement';
 import StockOverview from '../../components/admin/StockOverview';
 import DonorsManagement from '../../components/admin/DonorsManagement';
+import ComplaintsManagement from '../../components/admin/ComplaintsManagement'; // NEW
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [expiringUnits, setExpiringUnits] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [pendingComplaints, setPendingComplaints] = useState([]); // NEW
   const [loading, setLoading] = useState(true);
   const [alertMessage, setAlertMessage] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -26,15 +29,17 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [stockRes, expiringRes, requestsRes] = await Promise.all([
+      const [stockRes, expiringRes, requestsRes,complaintsRes] = await Promise.all([
         inventoryService.getStockStats(),
         inventoryService.getExpiringUnits(),
-        requestService.getRequests({ status: 'pending' })
+        requestService.getRequests({ status: 'pending' }),
+        complaintService.getComplaints({ status: 'pending' }) // NEW
       ]);
 
       setStats(stockRes.data);
       setExpiringUnits(expiringRes.data);
       setPendingRequests(requestsRes.data);
+      setPendingComplaints(complaintsRes.data); // NEW
     // eslint-disable-next-line no-unused-vars
     } catch (error) {
       setAlertMessage({
@@ -57,19 +62,22 @@ const AdminDashboard = () => {
     { id: 'overview', label: 'Overview', icon: TrendingUp },
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'requests', label: 'Requests', icon: Users },
-    { id: 'donors', label: 'Donors', icon: Users } 
+    { id: 'donors', label: 'Donors', icon: Users },
+     { id: 'complaints', label: 'Complaints', icon: MessageSquare, badge: pendingComplaints.length } // NEW 
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 animate-fadeIn">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-600">Manage blood inventory and requests</p>
-        </div>
+       <div className="mb-8 animate-fadeIn">
+  <h1 className="text-4xl font-bold text-gray-900 mb-2">
+    Blood Bank Management Portal
+  </h1>
+  <p className="text-gray-600">
+    Manage blood inventory, approve requests, and coordinate with donors
+  </p>
+</div>
 
         {alertMessage && (
           <Alert
@@ -161,6 +169,9 @@ const AdminDashboard = () => {
            {activeTab === 'donors' && (
           <DonorsManagement /> // NEW TAB CONTENT
         )}
+        {activeTab === 'complaints' && (
+            <ComplaintsManagement onRefresh={fetchDashboardData} /> // NEW
+          )}
         </div>
       </div>
     </div>

@@ -56,10 +56,12 @@ const Navbar = () => {
                 
                 <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900 truncate max-w-[200px]">
-                      {user.email}
-                    </p>
-                    <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+  <p className="text-sm font-semibold text-gray-900">{user.email}</p>
+  <p className="text-xs text-gray-500 capitalize">
+    {user.role === 'admin' ? 'Blood Bank Admin' : 
+     user.role === 'donor' ? 'Blood Donor' : 
+     'Hospital/Individual'}
+  </p>
                   </div>
                   
                   <Button

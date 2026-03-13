@@ -7,14 +7,17 @@ import Alert from '../common/Alert';
 import { inventoryService } from '../../services/inventoryService';
 import { donorService } from '../../services/donorService';
 import { BLOOD_GROUPS } from '../../utils/constants';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Users } from 'lucide-react';
 
 const AddBloodUnitModal = ({ onClose, onSuccess }) => {
+  const [bulkMode, setBulkMode] = useState(false); // NEW: Toggle for bulk mode
+  
   const [formData, setFormData] = useState({
     blood_group: '',
     donation_date: new Date().toISOString().split('T')[0],
     storage_location: '',
-    donor_id: ''
+    donor_id: null,
+    quantity: 1 // NEW: For bulk creation
   });
 
   const [donors, setDonors] = useState([]);
@@ -22,22 +25,31 @@ const AddBloodUnitModal = ({ onClose, onSuccess }) => {
   const [alertMessage, setAlertMessage] = useState(null);
 
   useEffect(() => {
-    fetchDonors();
-  }, []);
+    if (!bulkMode) {
+      fetchDonors();
+    }
+  }, [bulkMode]);
 
   const fetchDonors = async () => {
     try {
       const response = await donorService.getEligibleDonors();
-      setDonors(response.data || []);
+      setDonors(response.data);
     } catch (error) {
       console.error('Failed to fetch donors:', error);
-      setDonors([]);
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === 'donor_id') {
+      setFormData(prev => ({ 
+        ...prev, 
+        donor_id: value ? parseInt(value) : null 
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -46,40 +58,27 @@ const AddBloodUnitModal = ({ onClose, onSuccess }) => {
     setAlertMessage(null);
 
     try {
-      // Prepare data - remove donor_id if it's empty
-      const dataToSend = {
-        blood_group: formData.blood_group,
-        donation_date: formData.donation_date,
-        storage_location: formData.storage_location
-      };
-
-      // Only add donor_id if it's not empty
-      if (formData.donor_id && formData.donor_id !== '') {
-        dataToSend.donor_id = parseInt(formData.donor_id);
-      }
-
-      console.log('Sending data:', dataToSend); // Debug log
-
-      await inventoryService.addBloodUnit(dataToSend);
-      onSuccess();
-    } catch (error) {
-      console.error('Error response:', error.response); // Debug log
-      
-      // Handle validation errors
-      if (error.response?.data?.errors) {
-        const errorMessages = error.response.data.errors
-          .map(err => `${err.field}: ${err.message}`)
-          .join(', ');
-        setAlertMessage({
-          type: 'error',
-          message: errorMessages
+      if (bulkMode) {
+        // Bulk creation (anonymous donors)
+        await inventoryService.addBulkBloodUnits({
+          blood_group: formData.blood_group,
+          donation_date: formData.donation_date,
+          storage_location: formData.storage_location,
+          quantity: parseInt(formData.quantity)
         });
       } else {
-        setAlertMessage({
-          type: 'error',
-          message: error.response?.data?.message || 'Failed to add blood unit'
-        });
+        // Single unit creation (with optional donor)
+        await inventoryService.addBloodUnit(formData);
       }
+      
+      onSuccess();
+    } catch (error) {
+      console.error('Add blood unit error:', error.response || error);
+      
+      setAlertMessage({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to add blood unit. Check console for details.'
+      });
     } finally {
       setLoading(false);
     }
@@ -89,7 +88,7 @@ const AddBloodUnitModal = ({ onClose, onSuccess }) => {
     <Modal
       isOpen={true}
       onClose={onClose}
-      title="Add Blood Unit"
+      title={bulkMode ? "Add Bulk Blood Units (Anonymous)" : "Add Blood Unit"}
       size="md"
     >
       {alertMessage && (
@@ -100,6 +99,27 @@ const AddBloodUnitModal = ({ onClose, onSuccess }) => {
           className="mb-4"
         />
       )}
+
+      {/* NEW: Bulk Mode Toggle */}
+      <div className="mb-4 flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <input
+          type="checkbox"
+          id="bulkMode"
+          checked={bulkMode}
+          onChange={(e) => {
+            setBulkMode(e.target.checked);
+            if (e.target.checked) {
+              setFormData(prev => ({ ...prev, donor_id: null, quantity: 5 }));
+            } else {
+              setFormData(prev => ({ ...prev, quantity: 1 }));
+            }
+          }}
+          className="w-4 h-4 text-blood-red rounded focus:ring-blood-red"
+        />
+        <label htmlFor="bulkMode" className="text-sm font-medium text-gray-700 cursor-pointer">
+          Bulk Mode (Add multiple units from anonymous donors)
+        </label>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Select
@@ -126,37 +146,71 @@ const AddBloodUnitModal = ({ onClose, onSuccess }) => {
           name="storage_location"
           value={formData.storage_location}
           onChange={handleChange}
-          placeholder="e.g., Freezer-A1"
+          placeholder={bulkMode ? "e.g., Freezer-A (units will be numbered)" : "e.g., Freezer-A1"}
           icon={MapPin}
           required
         />
 
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Donor (Optional)
-          </label>
-          <select
-            name="donor_id"
-            value={formData.donor_id}
-            onChange={handleChange}
-            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blood-red focus:ring-2 focus:ring-blood-red-light transition-all duration-200"
-          >
-            <option value="">No donor / Anonymous</option>
-            {donors.map(donor => (
-              <option key={donor.donor_id} value={donor.donor_id}>
-                {donor.full_name} ({donor.blood_group})
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            {donors.length === 0 ? 'No eligible donors found' : 'Select a donor or leave blank'}
-          </p>
-        </div>
+        {bulkMode ? (
+          // BULK MODE: Quantity input
+          <div>
+            <Input
+              label="Quantity (Number of Units)"
+              type="number"
+              name="quantity"
+              value={formData.quantity}
+              onChange={handleChange}
+              placeholder="e.g., 10"
+              icon={Users}
+              required
+              min="1"
+              max="50"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Maximum 50 units per batch. Each unit will be automatically numbered.
+            </p>
+          </div>
+        ) : (
+          // SINGLE MODE: Donor selection
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Donor (Optional)
+            </label>
+            <select
+              name="donor_id"
+              value={formData.donor_id || ''}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blood-red focus:ring-2 focus:ring-blood-red-light transition-all"
+            >
+              <option value="">Anonymous / Walk-in Donor</option>
+              {donors.map(d => (
+                <option key={d.donor_id} value={d.donor_id}>
+                  {d.full_name} ({d.blood_group}) - {d.phone}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        <div className="bg-medical-blue-light p-4 rounded-lg border border-medical-blue">
-          <p className="text-sm text-medical-blue-dark">
-            <strong>Note:</strong> Expiration date will be automatically calculated as 35 days from donation date.
+        <div className={`p-4 rounded-lg border ${bulkMode ? 'bg-warning-light border-warning' : 'bg-medical-blue-light border-medical-blue'}`}>
+          <p className="text-sm font-medium mb-2">
+            {bulkMode ? '⚡ Bulk Mode Information:' : 'ℹ️ Single Unit Information:'}
           </p>
+          <ul className="text-sm space-y-1">
+            <li>• Expiration date: 35 days from donation</li>
+            {bulkMode ? (
+              <>
+                <li>• Units will be numbered automatically (e.g., Freezer-A-1, Freezer-A-2...)</li>
+                <li>• No donor record will be linked (anonymous donations)</li>
+                <li>• All units will have the same donation date and blood group</li>
+              </>
+            ) : (
+              <>
+                <li>• {formData.donor_id ? 'Donor\'s last donation date will be updated' : 'No donor will be linked'}</li>
+                <li>• Select donor from registered donors or leave anonymous</li>
+              </>
+            )}
+          </ul>
         </div>
 
         <div className="flex gap-3 pt-4">
@@ -166,7 +220,7 @@ const AddBloodUnitModal = ({ onClose, onSuccess }) => {
             fullWidth
             loading={loading}
           >
-            Add Blood Unit
+            {bulkMode ? `Add ${formData.quantity} Units` : 'Add Blood Unit'}
           </Button>
           <Button
             type="button"

@@ -48,7 +48,7 @@ const BloodRequest = sequelize.define('BloodRequest', {
   },
   
   status: {
-    type: DataTypes.ENUM('pending', 'approved', 'fulfilled', 'rejected'),
+    type: DataTypes.ENUM('pending', 'approved', 'in_transit', 'delivered', 'rejected'),
     defaultValue: 'pending'
   },
   
@@ -67,6 +67,22 @@ const BloodRequest = sequelize.define('BloodRequest', {
   },
   
   approved_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  
+  // NEW DELIVERY TRACKING FIELDS
+  estimated_delivery_time: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  
+  delivery_started_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  
+  delivered_at: {
     type: DataTypes.DATE,
     allowNull: true
   }

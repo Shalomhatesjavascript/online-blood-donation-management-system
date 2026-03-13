@@ -37,11 +37,17 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Rest of your app.js stays the same...
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP, please try again later.'
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 1000,  // INCREASED from 100 to 1000 requests per 15 minutes
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.'
+  },
+  standardHeaders: true,  // Return rate limit info in headers
+  legacyHeaders: false,   // Disable X-RateLimit-* headers
+  // Skip rate limiting for health checks
+  skip: (req) => req.path === '/api/health'
 });
 app.use('/api/', limiter);
 
@@ -53,12 +59,14 @@ const authRoutes = require('./routes/authRoutes');
 const donorRoutes = require('./routes/donorRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const requestRoutes = require('./routes/requestRoutes');
+const complaintRoutes = require('./routes/complaintRoutes'); 
 
 // Mount routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/donors', donorRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
 app.use('/api/v1/requests', requestRoutes);
+app.use('/api/v1/complaints', complaintRoutes); // NEW
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({

@@ -28,6 +28,11 @@ router.post('/',
   inventoryController.addBloodUnit
 );
 
+// NEW: Bulk unit creation
+router.post('/bulk',
+  checkRole('admin'),
+  inventoryController.addBulkBloodUnits
+);
 // Update blood unit (admin only)
 router.put('/:id',
   checkRole('admin'),

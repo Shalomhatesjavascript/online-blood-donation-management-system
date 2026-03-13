@@ -80,7 +80,7 @@ exports.approveRequest = async (req, res) => {
   
   try {
     const { id } = req.params;
-    const { admin_notes } = req.body;
+    const { admin_notes, delivery_time_minutes } = req.body;
 
     const request = await BloodRequest.findByPk(id);
     if (!request) {
@@ -115,11 +115,20 @@ exports.approveRequest = async (req, res) => {
       });
     }
 
+
+    // Calculate delivery time (default 1 minute for demo, can be customized)
+    const deliveryMinutes = delivery_time_minutes || 1;
+    const estimatedDelivery = new Date();
+    estimatedDelivery.setMinutes(estimatedDelivery.getMinutes() + deliveryMinutes);
+
+
     // Update request status
     request.status = 'approved';
     request.approved_by = req.user.user_id;
     request.approved_at = new Date();
     request.admin_notes = admin_notes || '';
+    request.estimated_delivery_time = estimatedDelivery; // NEW
+    request.delivery_started_at = new Date(); // NEW
     await request.save({ transaction });
 
     // Mark blood units as used
@@ -140,13 +149,32 @@ exports.approveRequest = async (req, res) => {
 
     await transaction.commit();
 
+    // Schedule automatic delivery status update (simulated)
+    setTimeout(async () => {
+      try {
+        const updatedRequest = await BloodRequest.findByPk(id);
+        if (updatedRequest && updatedRequest.status === 'approved') {
+          updatedRequest.status = 'delivered';
+          updatedRequest.delivered_at = new Date();
+          await updatedRequest.save();
+          console.log(`✅ Request ${id} marked as delivered`);
+        }
+      } catch (error) {
+        console.error('Error updating delivery status:', error);
+      }
+    }, deliveryMinutes * 60 * 1000); // Convert minutes to milliseconds
+
     res.status(200).json({
       success: true,
       message: 'Request approved successfully',
-      data: request
+      data: {
+        ...request.toJSON(),
+        estimated_delivery_minutes: deliveryMinutes
+      }
     });
   } catch (error) {
     await transaction.rollback();
+    console.error('Approve request error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to approve request',

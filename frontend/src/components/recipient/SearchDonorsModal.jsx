@@ -72,20 +72,28 @@ const SearchDonorsModal = ({ onClose }) => {
 };
 
   return (
-    <Modal
-      isOpen={true}
-      onClose={onClose}
-      title="Search Blood Donors"
-      size="lg"
-    >
-      {alertMessage && (
-        <Alert
-          type={alertMessage.type}
-          message={alertMessage.message}
-          onClose={() => setAlertMessage(null)}
-          className="mb-4"
-        />
-      )}
+   <Modal
+  isOpen={true}
+  onClose={onClose}
+  title="Search Available Blood Donors"
+  size="lg"
+>
+  {alertMessage && (
+    <Alert
+      type={alertMessage.type}
+      message={alertMessage.message}
+      onClose={() => setAlertMessage(null)}
+      className="mb-4"
+    />
+  )}
+
+  {/* Add helper text */}
+  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+    <p className="text-sm text-gray-700">
+      Search for eligible donors by blood group and location. 
+      Contact information is provided for approved requests only.
+    </p>
+  </div>
 
       <form onSubmit={handleSearch} className="space-y-4 mb-6">
         <div className="grid md:grid-cols-2 gap-4">

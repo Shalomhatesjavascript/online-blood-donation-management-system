@@ -163,6 +163,69 @@ exports.addBloodUnit = async (req, res) => {
   }
 };
 
+exports.addBulkBloodUnits = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const { blood_group, donation_date, storage_location, quantity } = req.body;
+
+    console.log('📝 Bulk blood unit creation:', { blood_group, quantity, storage_location });
+
+    // Validate quantity
+    if (!quantity || quantity < 1 || quantity > 50) {
+      await transaction.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Quantity must be between 1 and 50 units'
+      });
+    }
+
+    // Calculate expiration date
+    const finalDonationDate = donation_date || new Date();
+    const expDate = new Date(finalDonationDate);
+    expDate.setDate(expDate.getDate() + 35);
+    const finalExpirationDate = expDate.toISOString().split('T')[0];
+
+    // Create multiple units
+    const units = [];
+    for (let i = 0; i < quantity; i++) {
+      const unit = await BloodInventory.create({
+        blood_group,
+        donation_date: finalDonationDate,
+        expiration_date: finalExpirationDate,
+        donor_id: null, // Anonymous/bulk donation
+        storage_location: `${storage_location}-${i + 1}`,
+        status: 'available'
+      }, { transaction });
+      
+      units.push(unit);
+    }
+
+    await transaction.commit();
+    console.log(`✅ Created ${quantity} blood units`);
+
+    res.status(201).json({
+      success: true,
+      message: `${quantity} blood units added successfully`,
+      data: {
+        quantity: units.length,
+        blood_group,
+        storage_location,
+        units: units.map(u => u.unit_id)
+      }
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('❌ Bulk blood unit creation error:', error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add blood units',
+      error: error.message
+    });
+  }
+};
+
 // Add new endpoint for manually updating donor's last donation date
 exports.updateDonorDonationDate = async (req, res) => {
   try {

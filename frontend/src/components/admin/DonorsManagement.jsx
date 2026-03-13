@@ -138,7 +138,9 @@ const DonorsManagement = () => {
         />
       )}
 
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Donors Management</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">
+  Registered Blood Donors
+</h2>
         {/* ADD EXPORT BUTTON */}
         <Button
           variant="success"

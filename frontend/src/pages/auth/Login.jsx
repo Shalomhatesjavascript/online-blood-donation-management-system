@@ -155,9 +155,9 @@ const Login = () => {
                 <span className="font-semibold">Demo Accounts:</span>
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Donor: donor@test.com | Recipient: recipient@test.com | Admin: admin@bloodbank.com 
+                Donor: donor@test.com | Recipient: recipient@test.com | Admin: admin@bloodbank.com | hospital:info@reddingtonhospital.com 
               </p>
-              <p className="text-xs text-gray-500">Password: Test1234 AdminPassword: Admin123</p>
+              <p className="text-xs text-gray-500">Password: Test1234 AdminPassword: Admin123 || Shalom123!</p>
             </div>
           </div>
         </div>

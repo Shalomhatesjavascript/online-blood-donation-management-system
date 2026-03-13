@@ -3,6 +3,7 @@ const User = require('./User');
 const Donor = require('./Donor');
 const BloodInventory = require('./BloodInventory');
 const BloodRequest = require('./BloodRequest');
+const Complaint = require('./Complaint'); // NEW
 
 // ==========================================
 // DEFINE RELATIONSHIPS
@@ -11,7 +12,7 @@ const BloodRequest = require('./BloodRequest');
 // User <-> Donor (One-to-One)
 User.hasOne(Donor, {
   foreignKey: 'donor_id',
-  onDelete: 'CASCADE'  // If user deleted, delete donor profile too
+  onDelete: 'CASCADE'
 });
 Donor.belongsTo(User, {
   foreignKey: 'donor_id'
@@ -20,7 +21,7 @@ Donor.belongsTo(User, {
 // Donor <-> BloodInventory (One-to-Many)
 Donor.hasMany(BloodInventory, {
   foreignKey: 'donor_id',
-  onDelete: 'SET NULL'  // If donor deleted, keep blood units but set donor_id to NULL
+  onDelete: 'SET NULL'
 });
 BloodInventory.belongsTo(Donor, {
   foreignKey: 'donor_id'
@@ -29,7 +30,7 @@ BloodInventory.belongsTo(Donor, {
 // User <-> BloodRequest (One-to-Many)
 User.hasMany(BloodRequest, {
   foreignKey: 'recipient_id',
-  as: 'requests',  // Alias for accessing: user.requests
+  as: 'requests',
   onDelete: 'CASCADE'
 });
 BloodRequest.belongsTo(User, {
@@ -48,6 +49,28 @@ BloodRequest.belongsTo(User, {
   as: 'admin'
 });
 
+// NEW: User <-> Complaint (One-to-Many)
+User.hasMany(Complaint, {
+  foreignKey: 'user_id',
+  as: 'complaints',
+  onDelete: 'CASCADE'
+});
+Complaint.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+// NEW: Admin response relationship
+User.hasMany(Complaint, {
+  foreignKey: 'responded_by',
+  as: 'responses',
+  onDelete: 'SET NULL'
+});
+Complaint.belongsTo(User, {
+  foreignKey: 'responded_by',
+  as: 'admin'
+});
+
 // ==========================================
 // EXPORT ALL MODELS
 // ==========================================
@@ -56,5 +79,6 @@ module.exports = {
   User,
   Donor,
   BloodInventory,
-  BloodRequest
+  BloodRequest,
+  Complaint // NEW
 };
