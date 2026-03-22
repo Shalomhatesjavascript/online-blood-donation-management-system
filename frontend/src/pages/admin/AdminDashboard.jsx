@@ -117,9 +117,9 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex gap-8">
+       <div className="mb-6 -mx-3 sm:mx-0">
+  <div className="border-b border-gray-200 overflow-x-auto">
+    <nav className="flex gap-4 md:gap-8 px-3 sm:px-0 min-w-max sm:min-w-0">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
