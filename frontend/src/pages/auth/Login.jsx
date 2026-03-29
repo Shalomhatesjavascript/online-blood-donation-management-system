@@ -147,20 +147,7 @@ const Login = () => {
         </div>
 
         {/* Quick Info */}
-        <div className="mt-6 bg-white rounded-xl p-4 shadow-md animate-fadeIn">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-medical-blue mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-sm text-gray-700">
-                <span className="font-semibold">Demo Accounts:</span>
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Donor: donor@test.com | Recipient: recipient@test.com | Admin: admin@bloodbank.com | hospital:info@reddingtonhospital.com 
-              </p>
-              <p className="text-xs text-gray-500">Password: Test1234 AdminPassword: Admin123 || Shalom123!</p>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   );
